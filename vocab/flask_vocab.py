@@ -88,13 +88,17 @@ def check():
 
     # The data we need, from form and from cookie
     
-    #1 #text = flask.request.form["attempt"]
+    #1. text = flask.request.form["attempt"]
     text = flask.request.args.get("attempt", type = str)
     
     jumble = flask.session["jumble"]
     matches = flask.session.get("matches", [])  # Default to empty list
 
     # Is it good?
+
+    #2. add something
+    send_message = {}
+    
     in_jumble = LetterBag(jumble).contains(text)
     matched = WORDS.has(text)
 
@@ -102,22 +106,34 @@ def check():
     if matched and in_jumble and not (text in matches):
         # Cool, they found a new word
         matches.append(text)
+        #3.
+        send_message["message"] = "find {}".format(text)
         flask.session["matches"] = matches
     elif text in matches:
-        flask.flash("You already found {}".format(text))
+        #4.
+        matched = False
+        send_message["message"] = "You already found {}".format(text)
     elif not matched:
-        flask.flash("{} isn't in the list of words".format(text))
+        #5.
+        matched = False
+        send_message["message"] = "{} isn't in the list of words".format(text)
     elif not in_jumble:
-        flask.flash(
-            '"{}" can\'t be made from the letters {}'.format(text, jumble))
+        #6.
+        send_message["message"] =  '"{}" can\'t be made from the letters {}'.format(text, jumble)
     else:
         app.logger.debug("This case shouldn't happen!")
         assert False  # Raises AssertionError
 
     # Choose page:  Solved enough, or keep going?
     if len(matches) >= flask.session["target_count"]:
+        #7.
+        send_message["message"] = True
        return flask.redirect(flask.url_for("success"))
     else:
+        #8.
+        send_message["message"] = False
+        send_message["in_jumble"] = in_jumble
+        send_message["matched"] = matched
        return flask.redirect(flask.url_for("keep_going"))
 
 ###############
